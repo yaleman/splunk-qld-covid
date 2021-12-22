@@ -1,0 +1,4 @@
+hechostname = "example.com"
+hectoken = "<my_fancy_token>"
+# hecindex = "some_other_index"
+# hecsourcetype = "my_custom:sourcetype"
