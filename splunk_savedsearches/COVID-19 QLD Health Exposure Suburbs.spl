@@ -1,0 +1,4 @@
+source=http:qldhealthcovid
+| stats values(suburb) as suburb
+| mvexpand suburb
+| sort suburb

@@ -1,0 +1,75 @@
+<form>
+  <label>COVID - QLD Health Contact Tracing</label>
+  <fieldset submitButton="false">
+    <input type="dropdown" token="lgas">
+      <label>LGA Match</label>
+      <choice value="*">All</choice>
+      <initialValue>QLD</initialValue>
+      <fieldForLabel>lgas</fieldForLabel>
+      <fieldForValue>lgas</fieldForValue>
+      <search>
+        <query>source="http:qldhealthcovid"
+| rename lgas{} as lgas
+| search lgas=*
+| rex mode=sed field=lgas "s/\d+//"
+| stats values(lgas) as lgas
+| mvexpand lgas
+| search lgas=*</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="time" token="timeframe" searchWhenChanged="true">
+      <label>Time Added</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="multiselect" token="suburbs" searchWhenChanged="true">
+      <label>Suburbs</label>
+      <choice value="*">All</choice>
+      <prefix>suburb IN (</prefix>
+      <suffix>)</suffix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter>,</delimiter>
+      <fieldForLabel>suburb</fieldForLabel>
+      <fieldForValue>suburb</fieldForValue>
+      <search ref="COVID-19 QLD Health Exposure Suburbs"></search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>source="http:qldhealthcovid" lgas{}="$lgas$*"  $suburbs$
+| addinfo
+| dedup hash sortby - _time
+| eval date=strptime(date, "%Y-%m-%dT%H:%M:%S%Z")
+| eval added=strptime(added, "%Y-%m-%dT%H:%M:%S%Z")
+| where added&gt;=info_min_time
+| eval date_short=strftime(date,"%Y-%m-%d")
+| fieldformat date=strftime(date,"%Y-%m-%d %H:%M")
+| fieldformat added=strftime(added,"%Y-%m-%d %H:%M")
+| rename lgas{} as lgas
+| stats list(location) as locations list(date) as date by suburb, date_short, , added
+| sort - added</query>
+          <earliest>$timeframe.earliest$</earliest>
+          <latest>$timeframe.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>
