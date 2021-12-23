@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$@")" || exit 1
+
 #shellcheck disable=SC1091
 source venv/bin/activate
 
