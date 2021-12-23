@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 """ parses the Queensland Health Covid Contacts page and pushes to HEC """
 
