@@ -5,6 +5,7 @@ if [ ! -d "./venv/" ]; then
     python3 -m venv venv || virtualenv venv || exit 1
 fi
 
+# shellcheck disable=SC1091
 source venv/bin/activate
 
 python3 -m pip install --upgrade pip
