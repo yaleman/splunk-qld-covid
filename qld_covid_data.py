@@ -36,9 +36,8 @@ try:
     if not hasattr(config,"hectoken"):
         print("Failed to find hectoken in config, please configure", file=sys.stderr)
         sys.exit(1)
-
-except ImportError:
-    print("Failed to import config, quitting", file=sys.stderr)
+except ImportError as import_error_message:
+    print(f"Failed to import config, quitting: {import_error_message}", file=sys.stderr)
     sys.exit(1)
 
 URL = "https://www.qld.gov.au/health/conditions/health-alerts/coronavirus-covid-19/current-status/contact-tracing"
