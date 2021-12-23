@@ -29,7 +29,7 @@ else:
         sys.exit(1)
 
 try:
-    from . import config
+    import config
     if not hasattr(config,"hechostname"):
         print("Failed to find hechostname in config, please configure", file=sys.stderr)
         sys.exit(1)
@@ -85,9 +85,9 @@ def send_data(entry:dict):
     }
 
     if hasattr(config, "hecindex"):
-        payload["index"] = config.hecindex
+        payload["index"] = getattr(config, "hecindex")
     if hasattr(config, "hecsourcetype"):
-        payload["sourcetype"] = config.hecsourcetype
+        payload["sourcetype"] = getattr(config, "hecsourcetype")
     else:
         payload["sourcetype"] = "_json"
 
