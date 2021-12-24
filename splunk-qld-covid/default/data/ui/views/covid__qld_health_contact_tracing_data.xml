@@ -2,19 +2,17 @@
   <label>COVID - QLD Health Contact Tracing</label>
   <fieldset submitButton="false">
     <input type="dropdown" token="lgas">
-      <label>LGA Match</label>
+      <label>State Match</label>
       <choice value="*">All</choice>
       <initialValue>QLD</initialValue>
-      <fieldForLabel>lgas</fieldForLabel>
-      <fieldForValue>lgas</fieldForValue>
+      <fieldForLabel>lga</fieldForLabel>
+      <fieldForValue>lga</fieldForValue>
       <search>
-        <query>source="http:qldhealthcovid"
-| rename lgas{} as lgas
-| search lgas=*
-| rex mode=sed field=lgas "s/\d+//"
-| stats values(lgas) as lgas
-| mvexpand lgas
-| search lgas=*</query>
+        <query>| inputlookup covid_lga
+| rex mode=sed field=lga "s/\d+//"
+| stats values(lga) as lga
+| mvexpand lga
+| search lga=* | sort lga</query>
         <earliest>-24h@h</earliest>
         <latest>now</latest>
       </search>
@@ -36,27 +34,54 @@
       <delimiter>,</delimiter>
       <fieldForLabel>suburb</fieldForLabel>
       <fieldForValue>suburb</fieldForValue>
-      <search ref="COVID-19 QLD Health Exposure Suburbs"></search>
+      <search>
+        <query>`covid_sourcedata`
+| stats values(suburb) as suburb | mvexpand suburb | sort suburb | where !isnull(suburb)</query>
+      </search>
       <default>*</default>
       <initialValue>*</initialValue>
+    </input>
+    <input type="multiselect" token="lga_ignore" searchWhenChanged="true">
+      <label>Ignore LGAs</label>
+      <prefix>(NOT lgas{} IN (</prefix>
+      <suffix>))</suffix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter>,</delimiter>
+      <fieldForLabel>lga_visible</fieldForLabel>
+      <fieldForValue>lga</fieldForValue>
+      <search>
+        <query>| inputlookup covid_lga
+| eval lga_visible=lga+" - "+name
+| table lga_visible, lga | sort lga_visible</query>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+      <choice value="zzz">None</choice>
+      <default>zzz</default>
     </input>
   </fieldset>
   <row>
     <panel>
       <table>
         <search>
-          <query>source="http:qldhealthcovid" lgas{}="$lgas$*"  $suburbs$
+          <query>`covid_sourcedata` lgas{}="$lgas$*" $suburbs$ $lga_ignore$
 | addinfo
 | dedup hash sortby - _time
 | eval date=strptime(date, "%Y-%m-%dT%H:%M:%S%Z")
 | eval added=strptime(added, "%Y-%m-%dT%H:%M:%S%Z")
 | where added&gt;=info_min_time
 | eval date_short=strftime(date,"%Y-%m-%d")
-| fieldformat date=strftime(date,"%Y-%m-%d %H:%M")
 | fieldformat added=strftime(added,"%Y-%m-%d %H:%M")
-| rename lgas{} as lgas
-| stats list(location) as locations list(date) as date by suburb, date_short, , added
-| sort - added</query>
+| rename lgas{} as lga
+| lookup covid_lga lga as lga
+| fillnull value="Unknown LGA Name" name
+| eval lga_coded=lga+" - "+name
+
+| eval date=strftime(date,"%Y-%m-%d %H:%M")
+| stats list(date) as "Contact Date" list(location) as locations by lga_coded, suburb, date_short, added
+| sort - added
+| fields - date_short</query>
           <earliest>$timeframe.earliest$</earliest>
           <latest>$timeframe.latest$</latest>
           <sampleRatio>1</sampleRatio>
