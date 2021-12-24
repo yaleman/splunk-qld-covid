@@ -1,0 +1,12 @@
+<nav search_view="search">
+  <view name="covid__qld_health_contact_tracing_data" default="true" />
+  <view name="search" />
+  <view name="dashboards" />
+<collection label="More">
+
+  <view name="analytics_workspace" />
+  <view name="datasets" />
+  <view name="reports" />
+  <view name="alerts" />
+  </collection>
+</nav>

@@ -1,54 +1,31 @@
 #!/usr/bin/env python3
-# coding: utf-8
-""" parses the Queensland Health Covid Contacts page and pushes to HEC """
 
 from datetime import datetime
-import time
 import json
+import os
+import sys
+import time
 
 import urllib.parse
-import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
 
 try:
     import requests
     from bs4 import BeautifulSoup
     from bs4.element import NavigableString, Tag
+    from dateutil.tz import gettz as ZoneInfo
 except ImportError as error_message:
-    print("Failed to import library, run python3 -m pip install -r requirements.txt", file=sys.stderr)
-    print(error_message, file=sys.stderr)
-    sys.exit(1)
-if sys.version_info.major == 3 and sys.version_info.minor==9:
-    # disabling reportmissingimports because it only exists in 3.9.x
-    from zoneinfo import ZoneInfo # pyright: reportMissingImports=false
-else:
-    try:
-        from dateutil.tz import gettz as ZoneInfo
-    except ImportError as error_message:
-        print("Failed to import library, run python3 -m pip install -r requirements.txt", file=sys.stderr)
-        print(error_message, file=sys.stderr)
-        sys.exit(1)
-
-try:
-    import config
-    if not hasattr(config,"hechostname"):
-        print("Failed to find hechostname in config, please configure", file=sys.stderr)
-        sys.exit(1)
-    if not hasattr(config,"hectoken"):
-        print("Failed to find hectoken in config, please configure", file=sys.stderr)
-        sys.exit(1)
-except ImportError as import_error_message:
-    print(f"Failed to import config, quitting: {import_error_message}", file=sys.stderr)
+    print(f"Failed to import library, {error_message}", file=sys.stderr)
     sys.exit(1)
 
 URL = "https://www.qld.gov.au/health/conditions/health-alerts/coronavirus-covid-19/current-status/contact-tracing"
+
 
 response = requests.get(URL)
 response.raise_for_status()
 
 soup = BeautifulSoup(response.content,features="lxml")
-
-# with open("cached.html", encoding="utf-8") as filehandle:
-#     soup = BeautifulSoup(filehandle.read(),features="lxml")
 
 def parse_date(date_string: str):
     """parse the input date string,
@@ -61,9 +38,8 @@ def parse_date(date_string: str):
                                 "%Y-%m-%dT%H:%M:%S")
         datevar = datevar.replace(tzinfo=ZoneInfo("Australia/Brisbane"))
     except ValueError as value_error:
-        print(f"Failed to parse '{date_string}' - {value_error}")
+        print(f"Failed to parse '{date_string}' - {value_error}", file=sys.stderr)
         return False
-#     print(dir(datevar))
     return datevar
 
 def generate_suburb_hash(suburb_object: dict):
@@ -74,39 +50,11 @@ def generate_suburb_hash(suburb_object: dict):
     hashval = f"{lga}-{suburb_object['date']}-{suburb_str}-{location}"
     return hashval
 
-def send_data(entry:dict):
-    """sends an event"""
-
-    headers = {
-        "Authorization" : f"Splunk {config.hectoken}",
-    }
-    payload = {
-        "event" : json.dumps(entry, ensure_ascii=False),
-    }
-
-    if hasattr(config, "hecindex"):
-        payload["index"] = getattr(config, "hecindex")
-    if hasattr(config, "hecsourcetype"):
-        payload["sourcetype"] = getattr(config, "hecsourcetype"
-    else:
-        payload["sourcetype"] = "_json"
-
-    try:
-        resp = requests.post(url=f"https://{config.hechostname}/services/collector/event", headers=headers, json=payload)
-        resp.raise_for_status()
-    except requests.exceptions.HTTPError as req_error:
-        print(resp.content, file=sys.stderr)
-        print(req_error, file=sys.stderr)
-        sys.exit(1)
-
-    if not resp.json().get("text") == "Success":
-        print("Sleeping and trying again")
-        time.sleep(1)
-        send_data(payload)
-
 tables = soup.find_all('table')
 
-fulldata = []
+logged = 0
+
+timestamp = int(time.time())
 
 for table in tables:
     if not isinstance(table, NavigableString):
@@ -136,9 +84,9 @@ for table in tables:
 
                             suburb_hash = generate_suburb_hash(this_suburb)
                             this_suburb["hash"] = suburb_hash
-                            fulldata.append(this_suburb)
-                            send_data(this_suburb)
-                            # print(json.dumps(this_suburb, indent=4, ensure_ascii=False))
+                            this_suburb["_time"] = timestamp
+                            logged += 1
+                            print(json.dumps(this_suburb, ensure_ascii=False))
 
 
-print(f"Sent {len(fulldata)} entries")
+print(f"Sent {logged} entries", file=sys.stderr)
