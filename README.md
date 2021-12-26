@@ -28,6 +28,10 @@ In this document: https://geoscape.com.au/wp-content/uploads/2021/08/Local-Gover
 
 ![lga pid screenshot](assets/lga_pid_screenshot.png)
 
+The file that made me realise I wasn't looking for some truly random thing was here: https://www.nhvr.gov.au/files/201904-1033-local-council-and-road-authority-contact-numbers.pdf
+
+![nhvr screenshot](assets/nhvr_screenshot.png)
+
 ## Extracting the data
 I extracted it from the data in https://github.com/FrakGart/psma-admin-bdy-2020-08 using `osmfinder.py`.
 
