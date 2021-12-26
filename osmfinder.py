@@ -72,20 +72,25 @@ CSV_FIELDS = [
     "name"
 ]
 
-# for element in fulldata:
-    # send_data(element, sourcetype=SOURCETYPE)
-# with open('qld_covid_data/lookups/covid_lga.csv', 'w', newline='', encoding="utf8") as csvfile:
-filename = 'covid_lga.csv'
+# adding in the ACT
+print("Manually adding ACT")
+data = {
+    "lga_pid" : "ACT1",
+    "name" : "Territory and Municipal Services Directorate",
+    "short_name" : "ACT",
+}
+fulldata.append(data)
+
+
+filename = 'qld_covid_data/lookups/qldcovid_lga.csv'
 print(f"Writing {filename}")
 with open(filename, 'w', newline='', encoding="utf8") as csvfile:
     writer = csv.DictWriter(csvfile,
                         fieldnames=CSV_FIELDS,
                         dialect="unix",
-                        # quoting=csv.QUOTE_MINIMAL,
     )
 
     writer.writeheader()
     for data in fulldata:
         data["lga_visible"] = f"{data['lga_pid']} - {data['name']}"
-        # print(json.dumps(data, indent=4, ensure_ascii=False))
         writer.writerow(data)

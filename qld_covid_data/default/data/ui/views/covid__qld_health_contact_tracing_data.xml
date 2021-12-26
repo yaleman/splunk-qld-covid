@@ -9,10 +9,11 @@
       <fieldForValue>lga</fieldForValue>
       <search>
         <query>| inputlookup qldcovid_lga
-| rex mode=sed field=lga "s/\d+//"
-| stats values(lga) as lga
+| rex mode=sed field=lga_pid "s/\d+//"
+| stats values(lga_pid) as lga
 | mvexpand lga
-| search lga=* | sort lga</query>
+| search lga=*
+| sort lga</query>
         <earliest>-24h@h</earliest>
         <latest>now</latest>
       </search>
@@ -49,11 +50,10 @@
       <valueSuffix>"</valueSuffix>
       <delimiter>,</delimiter>
       <fieldForLabel>lga_visible</fieldForLabel>
-      <fieldForValue>lga</fieldForValue>
+      <fieldForValue>lga_pid</fieldForValue>
       <search>
         <query>| inputlookup qldcovid_lga
-| eval lga_visible=lga+" - "+name
-| table lga_visible, lga | sort lga_visible</query>
+| table lga_visible, lga_pid | sort lga_visible</query>
         <earliest>-30d@d</earliest>
         <latest>now</latest>
       </search>
@@ -74,13 +74,13 @@
 | eval date_short=strftime(date,"%Y-%m-%d")
 | fieldformat added=strftime(added,"%Y-%m-%d %H:%M")
 | rename lgas{} as lga
-| lookup qldcovid_lga lga as lga
+| lookup qldcovid_lga lga_pid as lga
 | fillnull value="Unknown LGA Name" name
 | eval lga_coded=lga+" - "+name
 
 | eval date=strftime(date,"%Y-%m-%d %H:%M")
 | stats list(date) as "Contact Date" list(location) as locations by lga_coded, suburb, date_short, added
-| sort - added
+| sort -added, -date
 | fields - date_short</query>
           <earliest>$timeframe.earliest$</earliest>
           <latest>$timeframe.latest$</latest>

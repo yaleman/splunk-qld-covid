@@ -45,7 +45,7 @@ def parse_date(date_string: str):
 
 def generate_suburb_hash(suburb_object: dict):
     """generates a value based on the input data"""
-    lga = suburb_object.get('lgas','NA')
+    lga = "".join(suburb_object.get('lgas',['NA']))
     suburb_str = suburb_object.get('suburb', "unknown_suburb")
     location = suburb_object.get('location','unknown_location')
     hashval = f"{lga}-{suburb_object['date']}-{suburb_str}-{location}"
@@ -71,7 +71,7 @@ except Exception as connection_error:
 try:
     soup = BeautifulSoup(response.content,features="lxml")
 except Exception as souperror:
-    print("Exception parsing page content, bailing: {souperror}", file=sys.stderr)
+    print(f"Exception parsing page content, bailing: {souperror}", file=sys.stderr)
     sys.exit(1)
 
 logged = 0
@@ -118,6 +118,15 @@ for table in tables:
                                 else:
                                     # clean up the value
                                     this_suburb[keyname] = clean_value(tr.attrs[key], keyname)
+
+                            if "suburb" not in this_suburb or  this_suburb.get("suburb", "").strip() == "":
+                                this_suburb["suburb"] = "Unknown"
+
+                            if "lgas" not in this_suburb:
+                                if suburb.lower().endswith(" act"):
+                                    this_suburb["lgas"] = ["ACT1"]
+                                else:
+                                    this_suburb["lgas"] = ["Unspecified"]
 
                             suburb_hash = generate_suburb_hash(this_suburb)
                             this_suburb["hash"] = suburb_hash
