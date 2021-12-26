@@ -1,3 +1,8 @@
+"""parses the Queensland Health COVID-19 Contact Tracing page and returns each event as a JSON blob on a line"""
+
+
+from inspect import currentframe, getframeinfo
+
 from datetime import datetime
 import json
 import os
@@ -6,7 +11,10 @@ import time
 
 import urllib.parse
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
+# allow Splunk's python to include libs from the app lib dir
+include_dir = os.path.join(os.path.dirname(__file__), "..", "lib")
+if os.path.exists(include_dir):
+    sys.path.insert(0, include_dir)
 
 try:
     import requests
@@ -19,11 +27,6 @@ except ImportError as error_message:
 
 URL = "https://www.qld.gov.au/health/conditions/health-alerts/coronavirus-covid-19/current-status/contact-tracing"
 
-
-response = requests.get(URL)
-response.raise_for_status()
-
-soup = BeautifulSoup(response.content,features="lxml")
 
 def parse_date(date_string: str):
     """parse the input date string,
@@ -48,11 +51,49 @@ def generate_suburb_hash(suburb_object: dict):
     hashval = f"{lga}-{suburb_object['date']}-{suburb_str}-{location}"
     return hashval
 
-tables = soup.find_all('table')
+
+try:
+    response = requests.get(URL)
+    response.raise_for_status()
+except requests.exceptions.ConnectionError as connection_error:
+    print("ConnectionError to '{URL}', bailing: {connection_error}", file=sys.stderr)
+    sys.exit(1)
+except requests.exceptions.ConnectTimeout as connection_error:
+    print("ConnectTimeout to '{URL}', bailing: {connection_error}", file=sys.stderr)
+    sys.exit(1)
+except requests.exceptions.RequestException as connection_error:
+    print("RequestException to '{URL}', bailing: {connection_error}", file=sys.stderr)
+    sys.exit(1)
+except Exception as connection_error:
+    print("Exception pulling '{URL}', bailing: {connection_error}", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    soup = BeautifulSoup(response.content,features="lxml")
+except Exception as souperror:
+    print("Exception parsing page content, bailing: {souperror}", file=sys.stderr)
+    sys.exit(1)
 
 logged = 0
+timestamp = time.time()
 
-timestamp = int(time.time())
+tables = soup.find_all('table')
+if not tables:
+    print("Found no tables while parsing page, quitting.", file=sys.stderr)
+    sys.exit(1)
+
+def clean_value(value_str: str, key_name: str):
+    """ returns a cleaned value """
+    value = urllib.parse.unquote_plus(value_str)
+
+    value = value.replace('\r', " ")
+    value = value.replace('\n', " ")
+    while "  " in value:
+        value = value.replace("  ", " ")
+    if key_name == "lgas":
+        value = value.split(",")
+    return value
+
 
 for table in tables:
     if not isinstance(table, NavigableString):
@@ -75,10 +116,8 @@ for table in tables:
                                     date = parse_date(tr.attrs.get(key))
                                     this_suburb[keyname] = date.isoformat()
                                 else:
-                                    value = urllib.parse.unquote_plus(tr.attrs[key])
-                                    if keyname == "lgas":
-                                        value = value.split(",")
-                                    this_suburb[keyname] = value
+                                    # clean up the value
+                                    this_suburb[keyname] = clean_value(tr.attrs[key], keyname)
 
                             suburb_hash = generate_suburb_hash(this_suburb)
                             this_suburb["hash"] = suburb_hash
@@ -87,4 +126,6 @@ for table in tables:
                             print(json.dumps(this_suburb, ensure_ascii=False))
 
 
-print(f"Sent {logged} entries", file=sys.stderr)
+# grab the script filename
+frameinfo = getframeinfo(currentframe())
+print(f"Returned {logged} results from {frameinfo.filename}", file=sys.stderr)

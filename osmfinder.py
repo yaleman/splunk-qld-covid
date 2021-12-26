@@ -3,25 +3,11 @@
 import json
 import os
 import sys
-import time
+#import time
+import csv
 
 import lxml.etree
 
-import requests
-
-try:
-    import config
-    if not hasattr(config,"hechostname"):
-        print("Failed to find hechostname in config, please configure", file=sys.stderr)
-        sys.exit(1)
-    if not hasattr(config,"hectoken"):
-        print("Failed to find hectoken in config, please configure", file=sys.stderr)
-        sys.exit(1)
-except ImportError as import_error_message:
-    print(f"Failed to import config, quitting: {import_error_message}", file=sys.stderr)
-    sys.exit(1)
-
-SOURCETYPE = "qldcovid:lgadata"
 
 IGNORE_TAGS = [
     "member",
@@ -44,41 +30,6 @@ FILES_TO_PARSE = [
     "act_2020-08.osm",
     "tas_2020-08.osm",
 ]
-
-
-def send_data(entry:dict, sourcetype=None):
-    """sends an event"""
-
-    headers = {
-        "Authorization" : f"Splunk {config.hectoken}",
-    }
-    payload = {
-        "event" : json.dumps(entry, ensure_ascii=False),
-    }
-
-    if hasattr(config, "hecindex"):
-        payload["index"] = getattr(config, "hecindex")
-    if hasattr(config, "hecsourcetype"):
-        payload["sourcetype"] = getattr(config, "hecsourcetype")
-    else:
-        if sourcetype:
-            payload["sourcetype"] = sourcetype
-        else:
-            payload["sourcetype"] = "_json"
-
-    try:
-        resp = requests.post(url=f"https://{config.hechostname}/services/collector/event", headers=headers, json=payload)
-        resp.raise_for_status()
-    except requests.exceptions.HTTPError as req_error:
-        print(resp.content, file=sys.stderr)
-        print(req_error, file=sys.stderr)
-        sys.exit(1)
-
-    if not resp.json().get("text") == "Success":
-        print("Sleeping and trying again")
-        time.sleep(1)
-        send_data(payload)
-
 
 # LXML things - https://stackoverflow.com/questions/50456954/parsing-osm-xml-data-with-python-with-specific-sub-tags#50457156
 def parse_tag(child_object):
@@ -114,5 +65,27 @@ for filename in FILES_TO_PARSE:
 
 print(f"Found {len(fulldata)} LGAs")
 
+CSV_FIELDS = [
+    "lga_pid",
+    "lga_visible",
+    "short_name",
+    "name"
+]
+
 # for element in fulldata:
     # send_data(element, sourcetype=SOURCETYPE)
+# with open('qld_covid_data/lookups/covid_lga.csv', 'w', newline='', encoding="utf8") as csvfile:
+filename = 'covid_lga.csv'
+print(f"Writing {filename}")
+with open(filename, 'w', newline='', encoding="utf8") as csvfile:
+    writer = csv.DictWriter(csvfile,
+                        fieldnames=CSV_FIELDS,
+                        dialect="unix",
+                        # quoting=csv.QUOTE_MINIMAL,
+    )
+
+    writer.writeheader()
+    for data in fulldata:
+        data["lga_visible"] = f"{data['lga_pid']} - {data['name']}"
+        # print(json.dumps(data, indent=4, ensure_ascii=False))
+        writer.writerow(data)

@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 
-find "./splunk-qld-covid" -name '*.pyc' -delete
 
-# find "./splunk-qld-covid" -name '.*'
+APPID="qld_covid_data"
+APPDIR="./${APPID}/"
 
-find "./splunk-qld-covid" -type f -exec chmod 600 "{}" \;
+
+find "${APPDIR}" -name '*.pyc' -delete
+
+# find "${APPDIR}" -name '.*'
+
+find "${APPDIR}" -type f -exec chmod 600 "{}" \;
 find . -name '*.DS_Store' -delete
 
 #echo "Ensuring splunklib is up to date"
-#python3 -m pip install --upgrade -t splunk-qld-covid/lib/ splunk-sdk
+#python3 -m pip install --upgrade -t "${APPDIR}/lib/" splunk-sdk
 
 echo "Removing bs4 testing file because it has biased language."
-rm splunk-qld-covid/lib/bs4/testing.py
+rm "${APPDIR}/lib/bs4/testing.py"
 
-COPYFILE_DISABLE=1 tar czvf splunk-qld-covid.spl splunk-qld-covid/
-echo "Created splunk-qld-covid.spl"
+echo "Setting permissions on lib dir"
+find "${APPDIR}/lib" -type f -exec chmod 600 "{}" \;
+
+COPYFILE_DISABLE=1 tar czvf ${APPID}.spl "${APPDIR}"
+echo "Created ${APPID}.spl"

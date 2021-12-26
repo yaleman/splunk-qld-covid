@@ -1,43 +1,20 @@
-# splunk-qld-covid
+# Splunking Queensland Health COVID Data
 
 ## Splunk-side things
 
-I've turned this into an app - the file's at `splunk-qld-covid.spl`.
+I've turned this into an app - the file's at `qld_covid_data.spl`.
 
 ### Macros
 
 
 | Macro name | Default Value | Description |
 | --- | --- | --- |
-| `covid_sourcedata` | `sourcetype="covid:qldhealth"` | Where you sent the data through the ingester |
-| `covid_lgadata` | `sourcetype="qldcovid:lgadata"` | LGA Data from osmfinder.py |
-
+| `qldcovid_sourcedata` | `sourcetype="qldcovid:contacts"` | Where you sent the data through the ingester |
+| `qldcovid_lgadata` | `| inputlookup qldcovid_lga` | LGA Data from the lookup |
 
 ### Enabling the input
 
-Look for the script called `qld-covid-data.py` - there's a default cron schedule of every hour.
-
-## Usage of the standalone script
-
-### Create a config.py:
-
-```
-hechostname = "example.com"
-hectoken = "<my_fancy_token>"
-```
-
-You can also add `hecindex` and `hecsourcetype` elements to configure that, else it'll use the default index and `_json` as the sourcetype.
-
-### Running the thing
-
-```
-python3 -m venv venv
-source venv/bin/activate
-python3 -m pip install --upgrade pip
-python3 -m pip install -r requirements.txt
-
-python3 qld_covid_data.py
-```
+Look for the script called `qld_covid_contacts.py` - there's a default cron schedule of every hour.
 
 # Notes about LGA Data 
 
@@ -71,11 +48,9 @@ xz -d psma-admin-bdy-2020-08/tas_2020-08.osm.xz
 
 There's no "level 6" admin boundary defined for ACT... in this data anyway.
 
-## Importing the LGA data
+## Generating the LGA data
 
-Run `osmfinder.py` once - it'll use the sourcetype `qldcovid:lgadata` - if you want to change that, it's set at the top of the script.
-
-(It's also a lookup csv file in the app)
+Run `osmfinder.py` - it'll update the lookup csv file in the app.
 
 # Finally 
 
