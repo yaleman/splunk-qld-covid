@@ -8,7 +8,7 @@
       <fieldForLabel>lga</fieldForLabel>
       <fieldForValue>lga</fieldForValue>
       <search>
-        <query>| inputlookup covid_lga
+        <query>| inputlookup qldcovid_lga
 | rex mode=sed field=lga "s/\d+//"
 | stats values(lga) as lga
 | mvexpand lga
@@ -35,7 +35,7 @@
       <fieldForLabel>suburb</fieldForLabel>
       <fieldForValue>suburb</fieldForValue>
       <search>
-        <query>`covid_sourcedata`
+        <query>`qldcovid_sourcedata`
 | stats values(suburb) as suburb | mvexpand suburb | sort suburb | where !isnull(suburb)</query>
       </search>
       <default>*</default>
@@ -51,7 +51,7 @@
       <fieldForLabel>lga_visible</fieldForLabel>
       <fieldForValue>lga</fieldForValue>
       <search>
-        <query>| inputlookup covid_lga
+        <query>| inputlookup qldcovid_lga
 | eval lga_visible=lga+" - "+name
 | table lga_visible, lga | sort lga_visible</query>
         <earliest>-30d@d</earliest>
@@ -65,7 +65,7 @@
     <panel>
       <table>
         <search>
-          <query>`covid_sourcedata` lgas{}="$lgas$*" $suburbs$ $lga_ignore$
+          <query>`qldcovid_sourcedata` lgas{}="$lgas$*" $suburbs$ $lga_ignore$
 | addinfo
 | dedup hash sortby - _time
 | eval date=strptime(date, "%Y-%m-%dT%H:%M:%S%Z")
@@ -74,7 +74,7 @@
 | eval date_short=strftime(date,"%Y-%m-%d")
 | fieldformat added=strftime(added,"%Y-%m-%d %H:%M")
 | rename lgas{} as lga
-| lookup covid_lga lga as lga
+| lookup qldcovid_lga lga as lga
 | fillnull value="Unknown LGA Name" name
 | eval lga_coded=lga+" - "+name
 
