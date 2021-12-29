@@ -1,0 +1,91 @@
+<form version="1.1">
+  <label>COVID - QLD Health Case Data</label>
+  <description>Sourced from https://www.data.qld.gov.au/dataset/queensland-covid-19-case-line-list-location-source-of-infection - updates 'weekly'</description>
+  <search id="base">
+    <query>
+    `qldcovid_casedata`
+      | dedup id sortby -_time
+      | eval _time=strptime(notification_date,"%Y-%m-%dT%H:%M:%S")
+      | where _time &gt; relative_time(now(), "$timeframe.earliest$")
+      | fields *
+    </query>
+    <earliest>$timeframe.earliest$</earliest>
+    <latest>$timeframe.latest$</latest>
+  </search>
+  <fieldset submitButton="false">
+    <input type="time" token="timeframe" searchWhenChanged="true">
+      <label>Notification Date</label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <chart>
+        <title>Case Data (Updated every 7 days)</title>
+        <search base="base">
+          <query>
+| timechart count span=1d by source_infection limit=0</query>
+        </search>
+        <option name="charting.axisTitleX.text">Notification Date</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Case Data (Updated every 7 days)</title>
+        <search base="base">
+          <query>| bucket _time span=1d
+| stats count by _time, source_infection limit=0
+| stats list(source_infection) as Source, list(count) as "Count for date" by _time
+| sort -_time</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <search base="base">
+          <query>| stats latest(_time) as "Last Case Reported"
+| fieldformat "Last Case Reported"=strftime('Last Case Reported',"%Y-%m-%d")
+| eval "Within last ~7 days"=if((now()-'Last Case Reported')&lt;=691200,1,0)</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="within_7_days">
+          <colorPalette type="map">{"0":#DC4E41,"1":#53A051}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats latest(_time) as "Case Data Last Updated" where `qldcovid_casedata`
+| fieldformat "Case Data Last Updated"=strftime('Case Data Last Updated',"%Y-%m-%d %H:%M")
+
+| eval "Within last 24 hours"=if((now()-'Case Data Last Updated')&lt;=86400,1,0)</query>
+          <earliest>-1y@y</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="within_24_hours">
+          <colorPalette type="map">{"0":#DC4E41,"1":#53A051}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

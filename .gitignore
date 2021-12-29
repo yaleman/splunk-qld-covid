@@ -1,5 +1,8 @@
 **/__pycache__/*
+
 cached.html
+cached-cases.json
+
 config.py
 venv/
 psma-admin-bdy-2020-08/

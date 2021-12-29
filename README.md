@@ -12,9 +12,12 @@ I've turned this into an app - the file's at `qld_covid_data.spl`.
 | `qldcovid_sourcedata` | `sourcetype="qldcovid:contacts"` | Where you sent the data through the ingester |
 | `qldcovid_lgadata` | `| inputlookup qldcovid_lga` | LGA Data from the lookup |
 
-### Enabling the input
+### Inputs
 
-Look for the script called `qld_covid_contacts.py` - there's a default cron schedule of every hour.
+| Name | Script Filename | Description | Default Schedule | Official Update Frequency | 
+| Contact Data | `qld_covid_contacts.py` | Queensland Health Contact tracing data from [here](https://www.qld.gov.au/health/conditions/health-alerts/coronavirus-covid-19/current-status/contact-tracing)  | `12 * * * *` (every hour, at 12 minutes past the hour) | Irregular - whenever they post them |
+| Case Data | `qld_covid_cases.py` | Queensland Health COVID-19 case data from [here](https://www.data.qld.gov.au/dataset/queensland-covid-19-case-line-list-location-source-of-infection)  | `13 17 * * *` (5PM daily, at 13 minutes past the hour) | Weekly |
+
 
 # Notes about LGA Data 
 
@@ -60,6 +63,11 @@ Run `osmfinder.py` - it'll update the lookup csv file in the app.
 
 Eat some cake 🍰
 
+# Version history
+
+ - 0.0.1 - 0.0.2 : Initial Releases
+ - 0.0.3 : Added case data
+
 # Credits:
 
  - App icon by [NawIcon](https://thenounproject.com/nawiconstudio/)  from The Noun Project - https://thenounproject.com/icon/virus-3364075/
@@ -69,3 +77,4 @@ Eat some cake 🍰
  - [lxml](https://pypi.org/project/python-dateutil/) else we'd never get any XML done.
  - [openstreetmap](http://openstreetmap.org) because they had done the hard yards on the LGA info.
  
+
