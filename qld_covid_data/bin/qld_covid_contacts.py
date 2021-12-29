@@ -55,26 +55,26 @@ def generate_suburb_hash(suburb_object: dict):
 try:
     response = requests.get(URL)
     response.raise_for_status()
-except requests.exceptions.ConnectionError as connection_error:
-    print("ConnectionError to '{URL}', bailing: {connection_error}", file=sys.stderr)
-    sys.exit(1)
 except requests.exceptions.ConnectTimeout as connection_error:
     print("ConnectTimeout to '{URL}', bailing: {connection_error}", file=sys.stderr)
+    sys.exit(1)
+except requests.exceptions.ConnectionError as connection_error:
+    print("ConnectionError to '{URL}', bailing: {connection_error}", file=sys.stderr)
     sys.exit(1)
 except requests.exceptions.RequestException as connection_error:
     print("RequestException to '{URL}', bailing: {connection_error}", file=sys.stderr)
     sys.exit(1)
-except Exception as connection_error:
+except Exception as connection_error: # pylint: disable=broad-except
     print("Exception pulling '{URL}', bailing: {connection_error}", file=sys.stderr)
     sys.exit(1)
 
 try:
     soup = BeautifulSoup(response.content,features="lxml")
-except Exception as souperror:
+except Exception as souperror: # pylint: disable=broad-except
     print(f"Exception parsing page content, bailing: {souperror}", file=sys.stderr)
     sys.exit(1)
 
-logged = 0
+LOGGED = 0
 timestamp = time.time()
 
 tables = soup.find_all('table')
@@ -131,10 +131,10 @@ for table in tables:
                             suburb_hash = generate_suburb_hash(this_suburb)
                             this_suburb["hash"] = suburb_hash
                             this_suburb["_time"] = timestamp
-                            logged += 1
+                            LOGGED += 1
                             print(json.dumps(this_suburb, ensure_ascii=False))
 
 
 # grab the script filename
 frameinfo = getframeinfo(currentframe())
-print(f"Returned {logged} results from {frameinfo.filename}", file=sys.stderr)
+print(f"Returned {LOGGED} results from {frameinfo.filename}", file=sys.stderr)
