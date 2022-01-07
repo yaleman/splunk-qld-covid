@@ -10,8 +10,6 @@ import os
 import sys
 import time
 
-# import urllib.parse
-
 # allow Splunk's python to include libs from the app lib dir
 include_dir = os.path.join(os.path.dirname(__file__), "..", "lib")
 if os.path.exists(include_dir):
@@ -25,10 +23,8 @@ except ImportError as error_message:
 
 URL = "https://www.data.qld.gov.au/datastore/dump/1dbae506-d73c-4c19-b727-e8654b8be95a?format=json"
 
-
-
 try:
-    response = requests.get(URL)
+    response = requests.get(url=URL)
     response.raise_for_status()
 except requests.exceptions.ConnectTimeout as connection_error:
     print("ConnectTimeout to '{URL}', bailing: {connection_error}", file=sys.stderr)
@@ -73,5 +69,9 @@ for source_record in data.get("records"):
 
 
 # grab the script filename
-frameinfo = getframeinfo(currentframe())
-print(f"Returned {LOGGED} results from {frameinfo.filename}", file=sys.stderr)
+current_frame = currentframe()
+if current_frame:
+    frameinfo = getframeinfo(current_frame)
+    print(f"Returned {LOGGED} results from {frameinfo.filename}", file=sys.stderr)
+else:
+    print(f"Returned {LOGGED} results",file=sys.stderr)

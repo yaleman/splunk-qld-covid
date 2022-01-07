@@ -67,6 +67,7 @@ Eat some cake 🍰
 
  - 0.0.1 - 0.0.2 : Initial Releases
  - 0.0.3 : Added case data
+ - 0.0.4 : Added some more type checking for things.
 
 # Credits:
 

@@ -7,3 +7,4 @@ config.py
 venv/
 psma-admin-bdy-2020-08/
 .DS_Store
+cached*
