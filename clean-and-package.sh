@@ -34,6 +34,8 @@ find "${APPDIR}/" -name '*.conf' -exec ksconf check "{}" \;
 echo "Setting permissions on lib dir"
 find "${APPDIR}/lib" -type f -exec chmod 600 "{}" \;
 
+rm "${APPID}.spl"
+
 COPYFILE_DISABLE=1 tar czvf ${APPID}.spl \
     --exclude "*/lib/bs4/testing.py" \
     --exclude "*/lib/bs4/diagnose.py" \

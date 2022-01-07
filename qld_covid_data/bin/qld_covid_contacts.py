@@ -2,12 +2,12 @@
 
 
 from inspect import currentframe, getframeinfo
-
 from datetime import datetime
 import json
 import os
 import sys
 import time
+from typing import List, Union
 
 import urllib.parse
 
@@ -82,7 +82,7 @@ if not tables:
     print("Found no tables while parsing page, quitting.", file=sys.stderr)
     sys.exit(1)
 
-def clean_value(value_str: str, key_name: str):
+def clean_value(value_str: str, key_name: str) -> Union[str, List[str]]:
     """ returns a cleaned value """
     value = urllib.parse.unquote_plus(value_str)
 
@@ -91,7 +91,7 @@ def clean_value(value_str: str, key_name: str):
     while "  " in value:
         value = value.replace("  ", " ")
     if key_name == "lgas":
-        value = value.split(",")
+        return value.split(",")
     return value
 
 
@@ -105,15 +105,18 @@ for table in tables:
                         if isinstance(tr, Tag):
                             for key in tr.attrs:
                                 if key != 'class':
-                                    tr[key]  = tr.get(key).replace('%20',' ')
-                            suburb = urllib.parse.unquote_plus(tr.get("data-suburb","Unlisted"))
+                                    tr[key]  = str(tr[key]).replace('%20',' ')
+                            if "data-suburb" in tr:
+                                suburb = urllib.parse.unquote_plus(str(tr["data-suburb"]))
+                            else:
+                                suburb = "Unlisted" #pylint: disable=invalid-name
                             this_suburb = {}
                             for key in tr.attrs:
                                 keyname = key.replace("data-", "")
                                 if key == "class":
                                     pass
                                 elif keyname in ("date", "added"):
-                                    date = parse_date(tr.attrs.get(key))
+                                    date = parse_date(str(tr.attrs[key]))
                                     this_suburb[keyname] = date.isoformat()
                                 else:
                                     # clean up the value
@@ -135,6 +138,11 @@ for table in tables:
                             print(json.dumps(this_suburb, ensure_ascii=False))
 
 
+
 # grab the script filename
-frameinfo = getframeinfo(currentframe())
-print(f"Returned {LOGGED} results from {frameinfo.filename}", file=sys.stderr)
+current_frame = currentframe()
+if current_frame:
+    frameinfo = getframeinfo(current_frame)
+    print(f"Returned {LOGGED} results from {frameinfo.filename}", file=sys.stderr)
+else:
+    print(f"Returned {LOGGED} results",file=sys.stderr)
