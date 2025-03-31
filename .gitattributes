@@ -1,0 +1,12 @@
+psma-admin-bdy-2020-08/vic_2020-08_import_merged.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/wa_2020-08_import_merged.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/act_2020-08.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/nsw_2020-08.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/nt_2020-08_import_merged.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/qld_2020-08_import_merged.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/sa_2020-08.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/tas_2020-08.osm filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/diff_files/qld_diffs.tar.xz filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/diff_files/vic_diffs.tar.xz filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/diff_files/wa_diffs.tar.xz filter=lfs diff=lfs merge=lfs -text
+psma-admin-bdy-2020-08/diff_files/nt_diffs.tar.xz filter=lfs diff=lfs merge=lfs -text
